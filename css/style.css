@@ -1,0 +1,12 @@
+a.validated_check span {
+    vertical-align:middle;
+}
+.validated_is_valid {
+    color:green;
+}
+.validated_not_valid{
+    color:#ff0000;
+}
+.validated_loading {
+    display:none;
+}
