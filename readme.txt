@@ -3,8 +3,8 @@ Contributors: collinsinternet
 Donate link: http://www.allancollins.net
 Tags: W3C, Validation, html, xhtml, code
 Requires at least: 3.7
-Tested up to: 4.1
-Stable tag: 2.0.0
+Tested up to: 4.2.1
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 

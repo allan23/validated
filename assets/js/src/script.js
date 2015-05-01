@@ -1,0 +1,38 @@
+/*jslint browser:true */
+/*global ajax_object:false, ajaxurl:false */
+var val_check;
+function validated_check_now( i ) {
+    return function ( event ) {
+        event.preventDefault();
+        var post_id = val_check[i].getAttribute( 'data-pid' );
+        var checking_el = document.getElementById( 'validated_checking_' + post_id );
+        var validated_el = document.getElementById( 'validated_' + post_id );
+        checking_el.style.display = 'block';
+        validated_el.style.display = 'none';
+        validated_el.innerHTML = '';
+
+
+        var xhr = new XMLHttpRequest();
+        var send_data = 'action=validated&security=' + ajax_object.security + '&post_id=' + post_id;
+        xhr.open( 'POST', ajax_object.ajax_url, true );
+        xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8' );
+        xhr.onreadystatechange = function ( response ) {
+            checking_el.style.display = 'none';
+
+            validated_el.innerHTML = xhr.responseText;
+            validated_el.style.display = 'block';
+        };
+        
+        xhr.send( send_data );
+    };
+}
+
+
+window.onload = function () {
+    val_check = document.querySelectorAll( '.a_validated_check' );
+    var i;
+    for ( i = 0; i < val_check.length; i++ ) {
+        val_check[i].addEventListener( 'click', validated_check_now( i ) );
+    }
+};
+
