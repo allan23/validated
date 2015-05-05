@@ -85,8 +85,8 @@ class Validated {
 		check_ajax_referer( 'validated_security', 'security' );
 		$post_id = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
 		if ( !$post_id ) {
-			echo '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-			return;
+			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
+			return wp_send_json( array( 'result' => $result ) );
 		}
 
 		$url		 = get_permalink( $post_id );
@@ -94,12 +94,13 @@ class Validated {
 		$request	 = wp_remote_get( $checkurl );
 		if ( is_wp_error( $request ) ) {
 			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-		} else {
-			$headers				 = $request[ 'headers' ];
-			$headers[ 'checkurl' ]	 = $checkurl;
-			update_post_meta( $post_id, '__validated', $headers );
-			$result					 = $this->show_results( $headers );
+			return wp_send_json( array( 'result' => $result ) );
 		}
+		$headers				 = $request[ 'headers' ];
+		$headers[ 'checkurl' ]	 = $checkurl;
+		update_post_meta( $post_id, '__validated', $headers );
+		$result					 = $this->show_results( $headers );
+
 		return wp_send_json( array( 'result' => $result ) );
 	}
 
