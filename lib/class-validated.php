@@ -40,6 +40,8 @@ class Validated {
 	 */
 
 	function load_script() {
+		wp_enqueue_script( 'thickbox' );
+		wp_enqueue_style( 'thickbox' );
 		wp_enqueue_style( 'validated-css', VA_URL . "assets/css/style.min.css" );
 		wp_enqueue_script( 'validated-js', VA_URL . "assets/js/script.min.js" );
 		wp_localize_script( 'validated-js', 'ajax_object', array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'security' => wp_create_nonce( "validated_security" ) ) );
@@ -132,8 +134,5 @@ class Validated {
 		echo $result;
 	}
 
-	function footer() {
-		add_thickbox();
-	}
 
 }
