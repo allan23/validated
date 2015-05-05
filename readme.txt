@@ -14,6 +14,7 @@ This plugin will allow you to check your pages/posts HTML against the W3C Valida
 
 Is your website up to W3C HTML coding standards?  This plugin will allow you to test each page or post on your site against the W3C Validator.
 
+Want to contribute? Fork it: https://github.com/allan23/validated
 
 == Installation ==
 
@@ -39,6 +40,10 @@ Verify that your page or post URL can be accessed publicly.  At this time, this 
 
 
 == Changelog ==
+
+= 2.1.0 =
+* JS performance tweaks.
+* Displaying error results in a modal instead of a new window.
 
 = 2.0.0 =
 * Complete revamp of 1.0.2.
