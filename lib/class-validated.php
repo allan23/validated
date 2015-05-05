@@ -81,7 +81,7 @@ class Validated {
 	 * Sends the post/page permalink URL to the W3C Validator, saves results into postmeta, and echos results.
 	 * AJAX response.
 	 */
-	function validate_url( $use_post = true ) {
+	function validate_url() {
 		check_ajax_referer( 'validated_security', 'security' );
 		$post_id = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
 		if ( !$post_id ) {
