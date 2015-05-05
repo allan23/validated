@@ -80,7 +80,6 @@ class Validated {
 	}
 
 	/**
-	 * Sends the post/page permalink URL to the W3C Validator, saves results into postmeta, and echos results.
 	 * AJAX response.
 	 */
 	function validate_url() {
@@ -91,6 +90,14 @@ class Validated {
 			return wp_send_json( array( 'result' => $result ) );
 		}
 
+		return $this->process_post( $post_id );
+	}
+
+	/**
+	 * Sends the post/page permalink URL to the W3C Validator, saves results into postmeta, and returns results.
+	 * @param type $post_id
+	 */
+	private function process_post( $post_id ) {
 		$url		 = get_permalink( $post_id );
 		$checkurl	 = 'http://validator.w3.org/check?uri=' . $url;
 		$request	 = wp_remote_get( $checkurl );
@@ -131,8 +138,7 @@ class Validated {
 		if ( $return ) {
 			return $result;
 		}
-		echo $result;
+		echo $result; //XSS ok
 	}
-
 
 }
