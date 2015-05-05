@@ -67,7 +67,7 @@ class Validated {
 			case 'validated_is_valid':
 				$headers = get_post_meta( $post_id, '__validated', true );
 				echo '<div id="validated_' . esc_attr( $post_id ) . '">';
-				$this->show_results( $headers );
+				$this->show_results( $headers, false );
 				echo '</div>';
 				echo '<div id="validated_checking_' . esc_attr( $post_id ) . '" class="validated_loading"><img src="' . esc_url( VA_URL ) . '/assets/images/load.gif" alt="Loading"><br>Checking Now...</div>';
 				break;
@@ -107,8 +107,9 @@ class Validated {
 	/**
 	 * Takes returned HTTP headers from W3C Validator request and parses data.
 	 * @param $headers[] $headers
+	 * @param bool $return
 	 */
-	function show_results( $headers ) {
+	function show_results( $headers, $return = true ) {
 		if ( !$headers ) {
 			return;
 		}
@@ -125,7 +126,10 @@ class Validated {
 		} else {
 			$result.='<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 		}
-		return $result;
+		if ( $return ) {
+			return $result;
+		}
+		echo $result;
 	}
 
 	function footer() {
