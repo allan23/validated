@@ -1,4 +1,6 @@
-/*jslint browser:true */
+/*! Validated - v2.1.0
+ * http://www.allancollins.net
+ * Copyright (c) 2015; * Licensed GPLv2+ */
 /*global ajax_object:false */
 
 var val_check;

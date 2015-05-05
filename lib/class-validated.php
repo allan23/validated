@@ -93,14 +93,14 @@ class Validated {
 		$checkurl	 = 'http://validator.w3.org/check?uri=' . $url;
 		$request	 = wp_remote_get( $checkurl );
 		if ( is_wp_error( $request ) ) {
-			echo '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
+			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 		} else {
 			$headers				 = $request[ 'headers' ];
 			$headers[ 'checkurl' ]	 = $checkurl;
 			update_post_meta( $post_id, '__validated', $headers );
-			$this->show_results( $headers );
+			$result					 = $this->show_results( $headers );
 		}
-		die();
+		return wp_send_json( array( 'result' => $result ) );
 	}
 
 	/**
@@ -111,18 +111,20 @@ class Validated {
 		if ( !$headers ) {
 			return;
 		}
+		$result = '';
 		if ( isset( $headers[ 'x-w3c-validator-status' ] ) ) {
 			if ( 'Valid' === $headers[ 'x-w3c-validator-status' ] ) {
-				echo '<span class="validated_is_valid"><span class="dashicons dashicons-yes"></span> Valid</span>';
+				$result.= '<span class="validated_is_valid"><span class="dashicons dashicons-yes"></span> Valid</span>';
 			} elseif ( 'Abort' === $headers[ 'x-w3c-validator-status' ] ) {
-				echo '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
+				$result.='<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 			} else {
-				echo '<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( $headers[ 'checkurl' ] ) . '&TB_iframe=true&width=600&height=550" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
+				$result.='<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( $headers[ 'checkurl' ] ) . '&TB_iframe=true&width=600&height=550" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
 			}
-			echo '<br><small>Last checked: ' . esc_html( $headers[ 'date' ] ) . '</small>';
+			$result.='<br><small>Last checked: ' . esc_html( $headers[ 'date' ] ) . '</small>';
 		} else {
-			echo '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
+			$result.='<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 		}
+		return $result;
 	}
 
 	function footer() {
