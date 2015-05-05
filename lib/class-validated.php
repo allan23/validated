@@ -133,7 +133,7 @@ class Validated {
 			} elseif ( 'Abort' === $headers[ 'x-w3c-validator-status' ] ) {
 				echo '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 			} else {
-				echo '<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( add_query_arg( $headers[ 'checkurl' ], array( 'TB_iframe' => 'true', 'width' => 600, 'height' => 550 ) ) ) . '" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
+				echo '<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( $headers[ 'checkurl' ]) . '&TB_iframe=true&width=600&height=550" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
 			}
 			echo '<br><small>Last checked: ' . esc_html( $headers[ 'date' ] ) . '</small>';
 		} else {
