@@ -1,8 +1,6 @@
 /*jslint browser:true */
 /*global ajax_object:false */
-
 var val_check;
-
 function validated_check_now( i ) {
     return function ( event ) {
         event.preventDefault();
@@ -32,5 +30,11 @@ function validated_check_now( i ) {
 }
 
 
-
+window.onload = function () {
+    val_check = document.querySelectorAll( '.a_validated_check' );
+    var i;
+    for ( i = 0; i < val_check.length; i++ ) {
+        val_check[i].addEventListener( 'click', validated_check_now( i ) );
+    }
+};
 
