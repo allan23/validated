@@ -83,24 +83,16 @@ class Validated {
 	 */
 	function validate_url( $use_post = true ) {
 		check_ajax_referer( 'validated_security', 'security' );
-		if ( !isset( $_POST[ 'post_id' ] ) ) {
+		$post_id = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
+		if ( !$post_id ) {
 			echo '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 			return;
 		}
-		$post_id	 = (int) sanitize_text_field( $_POST[ 'post_id' ] );
+
 		$url		 = get_permalink( $post_id );
 		$checkurl	 = 'http://validator.w3.org/check?uri=' . $url;
-		if ( 1 == 0 ) {
-			$request = $this->validate_url_post( $url );
-		} else {
-
-
-			$request = wp_remote_get( $checkurl );
-		}
+		$request	 = wp_remote_get( $checkurl );
 		if ( is_wp_error( $request ) ) {
-			echo "<pre>";
-			print_r( $request );
-			die();
 			echo '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 		} else {
 			$headers				 = $request[ 'headers' ];
@@ -109,14 +101,6 @@ class Validated {
 			$this->show_results( $headers );
 		}
 		die();
-	}
-
-	function validate_url_post( $url ) {
-		$page_source = wp_remote_retrieve_body( wp_remote_get( $url ) );
-		$args		 = array(
-			'body' => array( 'fragment' => $page_source )
-		);
-		return wp_remote_post( 'http://validator.w3.org/check', $args );
 	}
 
 	/**
@@ -133,7 +117,7 @@ class Validated {
 			} elseif ( 'Abort' === $headers[ 'x-w3c-validator-status' ] ) {
 				echo '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 			} else {
-				echo '<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( $headers[ 'checkurl' ]) . '&TB_iframe=true&width=600&height=550" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
+				echo '<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( $headers[ 'checkurl' ] ) . '&TB_iframe=true&width=600&height=550" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
 			}
 			echo '<br><small>Last checked: ' . esc_html( $headers[ 'date' ] ) . '</small>';
 		} else {
