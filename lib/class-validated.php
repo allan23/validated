@@ -32,7 +32,6 @@ class Validated {
 		add_action( 'manage_pages_custom_column', array( $this, 'display_columns' ), 10, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_script' ) );
 		add_action( 'wp_ajax_validated', array( $this, 'validate_url' ) );
-		add_action( 'admin_footer', array( $this, 'footer' ) );
 	}
 
 	/*
