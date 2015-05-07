@@ -32,6 +32,7 @@ class Validated {
 		add_action( 'manage_pages_custom_column', array( $this, 'display_columns' ), 10, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_script' ) );
 		add_action( 'wp_ajax_validated', array( $this, 'validate_url' ) );
+		add_action( 'save_post', array( $this, 'save_post' ) );
 	}
 
 	/*
@@ -85,10 +86,11 @@ class Validated {
 		check_ajax_referer( 'validated_security', 'security' );
 		$post_id = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
 		if ( !$post_id ) {
-			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-			return wp_send_json( array( 'result' => $result ) );
+			return $this->process_error();
 		}
-
+		if ( defined( 'VALIDATED_LOCAL' ) && true === VALIDATED_LOCAL ) {
+			return $this->process_post_local( $post_id );
+		}
 		return $this->process_post( $post_id );
 	}
 
@@ -101,14 +103,56 @@ class Validated {
 		$checkurl	 = 'http://validator.w3.org/check?uri=' . $url;
 		$request	 = wp_remote_get( $checkurl );
 		if ( is_wp_error( $request ) ) {
-			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-			return wp_send_json( array( 'result' => $result ) );
+			return $this->process_error();
 		}
 		$headers				 = $request[ 'headers' ];
 		$headers[ 'checkurl' ]	 = $checkurl;
 		update_post_meta( $post_id, '__validated', $headers );
 		$result					 = $this->show_results( $headers );
 
+		return wp_send_json( array( 'result' => $result ) );
+	}
+
+	/**
+	 * Sends page HTML to W3C Validator.
+	 * @param int $post_id
+	 */
+	private function process_post_local( $post_id ) {
+		$url		 = get_permalink( $post_id );
+		$checkurl	 = 'http://validator.w3.org/check';
+		$args		 = $this->snag_local_code( $url );
+		$request	 = wp_remote_post( $checkurl, $args );
+
+		if ( is_wp_error( $request ) ) {
+			return $this->process_error();
+		}
+		$headers				 = $request[ 'headers' ];
+		$headers[ 'checkurl' ]	 = $checkurl . '?uri=' . $url;
+		update_post_meta( $post_id, '__validated', $headers );
+		$result					 = $this->show_results( $headers );
+
+		return wp_send_json( array( 'result' => $result ) );
+	}
+
+	/**
+	 * Snags local HTML and returns wp_remote arguments.
+	 * @param string $url Local URL
+	 * @return array
+	 */
+	private function snag_local_code( $url ) {
+		$args = array(
+			'body' => array(
+				'fragment' => wp_remote_retrieve_body( wp_remote_get( $url ) )
+			)
+		);
+		return $args;
+	}
+
+	/**
+	 * Send back response because of error.
+	 */
+	private function process_error() {
+		$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 		return wp_send_json( array( 'result' => $result ) );
 	}
 
@@ -138,6 +182,18 @@ class Validated {
 			return $result;
 		}
 		echo $result; //XSS ok
+	}
+
+	/**
+	 * Fires when a post is saved.
+	 * Clears out the post_meta value for saved validation results.
+	 * @param int $post_id
+	 */
+	function save_post( $post_id ) {
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+		delete_post_meta( $post_id, '__validated' );
 	}
 
 }
