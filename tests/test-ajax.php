@@ -38,11 +38,16 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 		parent::tearDown();
 	}
 
+	function switch_url( $url ) {
+		remove_filter( 'post_link', array( $this, 'switch_url' ) );
+		return 'http://www.google.com/';
+	}
+
 	/**
-	 * Test out validating http://example.org/?page_id=* as a public URL.
+	 * Test out validating http://www.google.com as a public URL.
 	 */
 	function test_ajax() {
-
+		add_filter( 'post_link', array( $this, 'switch_url' ) );
 
 		// Make the request
 		try {
