@@ -61,9 +61,10 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 	}
 
 	/**
-	 * Test out validating http://example.org/?page_id=* as a private URL.
+	 * Test out validating http://www.google.com/ as a private URL.
 	 */
 	function test_ajax_local() {
+		add_filter( 'post_link', array( $this, 'switch_url' ) );
 		// Activate Local Dev Testing
 		if ( !defined( 'VALIDATED_LOCAL' ) ) {
 			define( 'VALIDATED_LOCAL', true );
