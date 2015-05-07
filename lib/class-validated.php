@@ -89,7 +89,7 @@ class Validated {
 			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 			return wp_send_json( array( 'result' => $result ) );
 		}
-		if ( defined( 'VALIDATED_LOCAL' ) && true == VALIDATED_LOCAL ) {
+		if ( defined( 'VALIDATED_LOCAL' ) && true === VALIDATED_LOCAL ) {
 			return $this->process_post_local( $post_id );
 		}
 		return $this->process_post( $post_id );
@@ -122,23 +122,33 @@ class Validated {
 	private function process_post_local( $post_id ) {
 		$url		 = get_permalink( $post_id );
 		$checkurl	 = 'http://validator.w3.org/check';
-		$args		 = array(
-			'body' => array(
-				'fragment' => wp_remote_retrieve_body( wp_remote_get( $url ) )
-			)
-		);
+		$args		 = $this->snag_local_code( $url );
 		$request	 = wp_remote_post( $checkurl, $args );
 
 		if ( is_wp_error( $request ) ) {
 			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 			return wp_send_json( array( 'result' => $result ) );
 		}
-		$headers = $request[ 'headers' ];
-		$headers[ 'checkurl' ] = $checkurl . '?uri=' . $url;
+		$headers				 = $request[ 'headers' ];
+		$headers[ 'checkurl' ]	 = $checkurl . '?uri=' . $url;
 		update_post_meta( $post_id, '__validated', $headers );
-		$result	 = $this->show_results( $headers );
+		$result					 = $this->show_results( $headers );
 
 		return wp_send_json( array( 'result' => $result ) );
+	}
+
+	/**
+	 * Snags local HTML and returns wp_remote arguments.
+	 * @param string $url Local URL
+	 * @return array
+	 */
+	private function snag_local_code( $url ) {
+		$args = array(
+			'body' => array(
+				'fragment' => wp_remote_retrieve_body( wp_remote_get( $url ) )
+			)
+		);
+		return $args;
 	}
 
 	/**
