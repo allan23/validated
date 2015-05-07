@@ -1,1 +1,20 @@
-{ "require-dev": { "codeclimate/php-test-reporter": "dev-master" } }
+{
+  "name": "allan23/validated",
+  "description": "WordPress plugin to allow you to check your pages/posts HTML against the W3C Validator.",
+  "type": "wordpress-plugin",
+  "keywords": ["wordpress", "plugin", "w3c", "html", "validation"],
+  "license": ["GNU"],
+  "authors": [
+    {
+      "name": "Allan Collins",
+      "email": "collinsinternet@gmail.com",
+      "homepage": "http://www.allancollins.net"
+    }
+  ],
+  "require": {
+    "php": ">=5.2"
+  },
+  "require-dev": {
+    "codeclimate/php-test-reporter": "dev-master"
+  }
+}
