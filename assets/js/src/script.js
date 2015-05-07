@@ -20,7 +20,7 @@ function validated_check_now( i ) {
             if ( 4 === xhr.readyState ) {
                 checking_el.style.display = 'none';
                 var validated_html = JSON.parse( xhr.responseText );
-                validated_el.innerHTML = validated_html.result;
+                validated_el.innerHTML = validated_html.data.result;
                 validated_el.style.display = 'block';
             }
         };

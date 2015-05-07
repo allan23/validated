@@ -84,9 +84,12 @@ class Validated {
 	 */
 	function validate_url() {
 		check_ajax_referer( 'validated_security', 'security' );
-		$post_id = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
+		if (isset($_POST['post_id'])){
+			$post_id = filter_var( $_POST[ 'post_id' ], FILTER_SANITIZE_NUMBER_INT );
+		}
+		
 		if ( !$post_id ) {
-			return $this->process_error();
+			return $this->process_error( 'Post ID not passed.' );
 		}
 		if ( defined( 'VALIDATED_LOCAL' ) && true === VALIDATED_LOCAL ) {
 			return $this->process_post_local( $post_id );
@@ -110,7 +113,7 @@ class Validated {
 		update_post_meta( $post_id, '__validated', $headers );
 		$result					 = $this->show_results( $headers );
 
-		return wp_send_json( array( 'result' => $result ) );
+		return wp_send_json_success( array( 'result' => $result, 'type' => 'Live', 'checkurl' => $checkurl ) );
 	}
 
 	/**
@@ -131,7 +134,7 @@ class Validated {
 		update_post_meta( $post_id, '__validated', $headers );
 		$result					 = $this->show_results( $headers );
 
-		return wp_send_json( array( 'result' => $result ) );
+		return wp_send_json_success( array( 'result' => $result, 'type' => 'Local' ) );
 	}
 
 	/**
@@ -151,9 +154,9 @@ class Validated {
 	/**
 	 * Send back response because of error.
 	 */
-	private function process_error() {
+	private function process_error( $msg = '' ) {
 		$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-		return wp_send_json( array( 'result' => $result ) );
+		return wp_send_json_error( array( 'result' => $result, 'msg' => $msg ) );
 	}
 
 	/**
