@@ -89,7 +89,9 @@ class Validated {
 			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 			return wp_send_json( array( 'result' => $result ) );
 		}
-
+		if ( defined( 'VALIDATED_LOCAL' ) && true == VALIDATED_LOCAL ) {
+			return $this->process_post_local( $post_id );
+		}
 		return $this->process_post( $post_id );
 	}
 
@@ -109,6 +111,32 @@ class Validated {
 		$headers[ 'checkurl' ]	 = $checkurl;
 		update_post_meta( $post_id, '__validated', $headers );
 		$result					 = $this->show_results( $headers );
+
+		return wp_send_json( array( 'result' => $result ) );
+	}
+
+	/**
+	 * Sends page HTML to W3C Validator.
+	 * @param int $post_id
+	 */
+	private function process_post_local( $post_id ) {
+		$url		 = get_permalink( $post_id );
+		$checkurl	 = 'http://validator.w3.org/check';
+		$args		 = array(
+			'body' => array(
+				'fragment' => wp_remote_retrieve_body( wp_remote_get( $url ) )
+			)
+		);
+		$request	 = wp_remote_post( $checkurl, $args );
+
+		if ( is_wp_error( $request ) ) {
+			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
+			return wp_send_json( array( 'result' => $result ) );
+		}
+		$headers = $request[ 'headers' ];
+		$headers[ 'checkurl' ] = $checkurl . '?uri=' . $url;
+		update_post_meta( $post_id, '__validated', $headers );
+		$result	 = $this->show_results( $headers );
 
 		return wp_send_json( array( 'result' => $result ) );
 	}
