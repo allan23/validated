@@ -104,8 +104,7 @@ class Validated {
 		$checkurl	 = 'http://validator.w3.org/check?uri=' . $url;
 		$request	 = wp_remote_get( $checkurl );
 		if ( is_wp_error( $request ) ) {
-			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-			return wp_send_json( array( 'result' => $result ) );
+			return $this->process_error();
 		}
 		$headers				 = $request[ 'headers' ];
 		$headers[ 'checkurl' ]	 = $checkurl;
@@ -126,8 +125,7 @@ class Validated {
 		$request	 = wp_remote_post( $checkurl, $args );
 
 		if ( is_wp_error( $request ) ) {
-			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-			return wp_send_json( array( 'result' => $result ) );
+			return $this->process_error();
 		}
 		$headers				 = $request[ 'headers' ];
 		$headers[ 'checkurl' ]	 = $checkurl . '?uri=' . $url;
@@ -149,6 +147,14 @@ class Validated {
 			)
 		);
 		return $args;
+	}
+
+	/**
+	 * Send back response because of error.
+	 */
+	private function process_error() {
+		$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
+		return wp_send_json( array( 'result' => $result ) );
 	}
 
 	/**
