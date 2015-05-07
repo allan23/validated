@@ -86,8 +86,7 @@ class Validated {
 		check_ajax_referer( 'validated_security', 'security' );
 		$post_id = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
 		if ( !$post_id ) {
-			$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-			return wp_send_json( array( 'result' => $result ) );
+			return $this->process_error();
 		}
 		if ( defined( 'VALIDATED_LOCAL' ) && true === VALIDATED_LOCAL ) {
 			return $this->process_post_local( $post_id );
