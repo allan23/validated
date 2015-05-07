@@ -26,6 +26,9 @@ class ValidatedTests extends WP_UnitTestCase {
 		parent::tearDown();
 	}
 
+	/**
+	 * Check to see of the post_meta gets removed when the post is updated.
+	 */
 	function test_post_meta_removal_on_save() {
 
 
