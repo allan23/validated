@@ -32,6 +32,7 @@ class Validated {
 		add_action( 'manage_pages_custom_column', array( $this, 'display_columns' ), 10, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_script' ) );
 		add_action( 'wp_ajax_validated', array( $this, 'validate_url' ) );
+		add_action( 'save_post', array( $this, 'save_post' ) );
 	}
 
 	/*
@@ -138,6 +139,19 @@ class Validated {
 			return $result;
 		}
 		echo $result; //XSS ok
+	}
+
+	/**
+	 * Fires when a post is saved.
+	 * Clears out the post_meta value for saved validation results.
+	 * @param type $post_id
+	 * @return type
+	 */
+	function save_post( $post_id ) {
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+		delete_post_meta( $post_id, '__validated' );
 	}
 
 }
