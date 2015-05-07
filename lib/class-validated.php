@@ -124,6 +124,9 @@ class Validated {
 		$url		 = get_permalink( $post_id );
 		$checkurl	 = 'http://validator.w3.org/check';
 		$args		 = $this->snag_local_code( $url );
+		if (false === $args){
+			$this->process_error('Error snagging local file.');
+		}
 		$request	 = wp_remote_post( $checkurl, $args );
 
 		if ( is_wp_error( $request ) ) {
@@ -143,9 +146,13 @@ class Validated {
 	 * @return array
 	 */
 	private function snag_local_code( $url ) {
+		$request=wp_remote_get( $url );
+		if (  is_wp_error( $request )){
+			return false;
+		}
 		$args = array(
 			'body' => array(
-				'fragment' => wp_remote_retrieve_body( wp_remote_get( $url ) )
+				'fragment' => wp_remote_retrieve_body( $request )
 			)
 		);
 		return $args;

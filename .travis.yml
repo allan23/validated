@@ -20,3 +20,4 @@ script: phpunit --coverage-clover build/logs/clover.xml
 
 after_script:
     - ./vendor/bin/test-reporter --stdout > codeclimate.json
+    - "if [ \"$(phpenv version-name)\" != \"5.2\" ]; then curl -X POST -d @codeclimate.json -H 'Content-Type: application/json' -H 'User-Agent: Code Climate (PHP Test Reporter v0.1.1)' https://codeclimate.com/test_reports; fi;"
