@@ -144,8 +144,7 @@ class Validated {
 	/**
 	 * Fires when a post is saved.
 	 * Clears out the post_meta value for saved validation results.
-	 * @param type $post_id
-	 * @return type
+	 * @param int $post_id
 	 */
 	function save_post( $post_id ) {
 		if ( wp_is_post_revision( $post_id ) ) {
