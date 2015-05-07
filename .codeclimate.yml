@@ -1,3 +1,4 @@
 exclude_paths:
     - assets/js/src/*
     - assets/js/script.js
+    - tests/*
