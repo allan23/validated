@@ -113,7 +113,7 @@ class Validated {
 	private function process_post( $post_id ) {
 		$url		 = get_permalink( $post_id );
 		$checkurl	 = 'http://validator.w3.org/check?uri=' . $url;
-		$request	 = wp_remote_get( $checkurl );
+		$request	 = wp_safe_remote_get( $checkurl );
 		if ( is_wp_error( $request ) ) {
 			return $this->process_error( $request->get_error_message() );
 		}
@@ -137,7 +137,7 @@ class Validated {
 		if ( false === $args ) {
 			$this->process_error( 'Error snagging local file.' );
 		}
-		$request = wp_remote_post( $checkurl, $args );
+		$request = wp_safe_remote_post( $checkurl, $args );
 		if ( is_wp_error( $request ) ) {
 			return $this->process_error( $request->get_error_message() );
 		}
@@ -155,7 +155,7 @@ class Validated {
 	 * @return array
 	 */
 	private function snag_local_code( $url ) {
-		$request = wp_remote_get( $url );
+		$request = wp_safe_remote_get( $url );
 		if ( is_wp_error( $request ) ) {
 			return false;
 		}
