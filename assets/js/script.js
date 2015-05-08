@@ -9,6 +9,8 @@ function validated_check_now( i ) {
         var post_id = val_check[i].getAttribute( 'data-pid' );
         var checking_el = document.getElementById( 'validated_checking_' + post_id );
         var validated_el = document.getElementById( 'validated_' + post_id );
+        document.getElementById( 'validator-results' ).innerHTML = '<p><img src="' + ajax_object.val_loading + '"><br/>Loading...</p>';
+
         checking_el.style.display = 'block';
         validated_el.style.display = 'none';
         validated_el.innerHTML = '';
@@ -22,6 +24,14 @@ function validated_check_now( i ) {
             if ( 4 === xhr.readyState ) {
                 checking_el.style.display = 'none';
                 var validated_html = JSON.parse( xhr.responseText );
+                if ( false !== validated_html.data.report ) {
+                    var validated_modal = document.getElementById( 'TB_ajaxContent' );
+                    if ( typeof validated_html.data.report === undefined ) {
+                        validated_modal.innerHTML = '<p>There was an issue between your server and W3C. Please try again.</p>';
+                    } else {
+                        validated_modal.innerHTML = '<p><ol>' + validated_html.data.report + '</ol></p>';
+                    }
+                }
                 validated_el.innerHTML = validated_html.data.result;
                 validated_el.style.display = 'block';
             }

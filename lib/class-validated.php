@@ -6,6 +6,12 @@
 class Validated {
 
 	/**
+	 * Is local dev activated?
+	 * @var bool 
+	 */
+	var $is_local = false;
+
+	/**
 	 * Singleton instance
 	 * @var Validated|Bool
 	 */
@@ -26,6 +32,9 @@ class Validated {
 	 * Actions and Filters
 	 */
 	function __construct() {
+		if ( defined( 'VALIDATED_LOCAL' ) && true === VALIDATED_LOCAL ) {
+			$this->is_local = true;
+		}
 		add_filter( 'manage_posts_columns', array( $this, 'post_columns' ) );
 		add_filter( 'manage_pages_columns', array( $this, 'post_columns' ) );
 		add_action( 'manage_posts_custom_column', array( $this, 'display_columns' ), 10, 2 );
@@ -33,6 +42,7 @@ class Validated {
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_script' ) );
 		add_action( 'wp_ajax_validated', array( $this, 'validate_url' ) );
 		add_action( 'save_post', array( $this, 'save_post' ) );
+		add_action( 'admin_footer', array( $this, 'footer' ) );
 	}
 
 	/*
@@ -44,7 +54,11 @@ class Validated {
 		wp_enqueue_style( 'thickbox' );
 		wp_enqueue_style( 'validated-css', VA_URL . "assets/css/style.min.css" );
 		wp_enqueue_script( 'validated-js', VA_URL . "assets/js/script.min.js" );
-		wp_localize_script( 'validated-js', 'ajax_object', array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'security' => wp_create_nonce( "validated_security" ) ) );
+		wp_localize_script( 'validated-js', 'ajax_object', array(
+			'ajax_url'		 => admin_url( 'admin-ajax.php' ),
+			'security'		 => wp_create_nonce( "validated_security" ),
+			'val_loading'	 => esc_url( VA_URL ) . '/assets/images/load.gif'
+		) );
 	}
 
 	/**
@@ -76,7 +90,11 @@ class Validated {
 				echo '<div id="validated_checking_' . esc_attr( $post_id ) . '" class="validated_loading"><img src="' . esc_url( VA_URL ) . '/assets/images/load.gif" alt="Loading"><br>Checking Now...</div>';
 				break;
 			case 'validated_check':
-				echo '<a href="#" class="button-primary a_validated_check" data-pid="' . esc_attr( $post_id ) . '"><span class="dashicons dashicons-search"></span> Check</a>';
+				$class	 = '';
+				if ( $this->is_local ) {
+					$class = 'thickbox';
+				}
+				echo '<a title="Validator Results" href="#TB_inline?width=600&height=550&inlineId=validator-results" class="button-primary a_validated_check ' . $class . '" data-pid="' . esc_attr( $post_id ) . '"><span class="dashicons dashicons-search"></span> Check</a>';
 				break;
 		}
 	}
@@ -87,7 +105,7 @@ class Validated {
 	function validate_url() {
 		check_ajax_referer( 'validated_security', 'security' );
 		$post_id = $this->get_post_id();
-		if ( defined( 'VALIDATED_LOCAL' ) && true === VALIDATED_LOCAL ) {
+		if ( $this->is_local ) {
 			return $this->process_post_local( $post_id );
 		}
 		return $this->process_post( $post_id );
@@ -127,8 +145,9 @@ class Validated {
 		$headers[ 'checkurl' ]	 = $checkurl;
 		update_post_meta( (int) $post_id, '__validated', $headers );
 		$result					 = $this->show_results( $headers );
+		$report					 = false;
 
-		return wp_send_json_success( array( 'result' => $result, 'type' => 'Live', 'checkurl' => $checkurl ) );
+		return wp_send_json_success( array( 'result' => $result, 'type' => 'Live', 'checkurl' => $checkurl, 'report' => $report ) );
 	}
 
 	/**
@@ -149,9 +168,9 @@ class Validated {
 		$headers				 = $request[ 'headers' ];
 		$headers[ 'checkurl' ]	 = $checkurl . '?uri=' . $url;
 		update_post_meta( (int) $post_id, '__validated', $headers );
-		$result					 = $this->show_results( $headers );
-
-		return wp_send_json_success( array( 'result' => $result, 'type' => 'Local' ) );
+		$result					 = $this->show_results( $headers, true, $post_id );
+		$report					 = Validated_DOM::get_html( wp_remote_retrieve_body( $request ), $headers[ 'x-w3c-validator-status' ] );
+		return wp_send_json_success( array( 'result' => $result, 'type' => 'Local', 'report' => $report ) );
 	}
 
 	/**
@@ -185,7 +204,7 @@ class Validated {
 	 * @param $headers[] $headers
 	 * @param bool $return
 	 */
-	function show_results( $headers, $return = true ) {
+	function show_results( $headers, $return = true, $post_id = 0 ) {
 		if ( !$headers ) {
 			return;
 		}
@@ -196,7 +215,11 @@ class Validated {
 			} elseif ( 'Abort' === $headers[ 'x-w3c-validator-status' ] ) {
 				$result.='<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
 			} else {
-				$result.='<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( $headers[ 'checkurl' ] ) . '&TB_iframe=true&width=600&height=550" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
+				if ( !$this->is_local ) {
+					$result.='<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( $headers[ 'checkurl' ] ) . '&TB_iframe=true&width=600&height=550" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
+				} else {
+					$result.='<span class="validated_not_valid"><span class="dashicons dashicons-no"></span>' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</span>';
+				}
 			}
 			$result.='<br><small>Last checked: ' . esc_html( $headers[ 'date' ] ) . '</small>';
 		} else {
@@ -218,6 +241,10 @@ class Validated {
 			return;
 		}
 		delete_post_meta( $post_id, '__validated' );
+	}
+
+	function footer() {
+		echo '<div id="validator-results" style="display:none;"></div>';
 	}
 
 }
