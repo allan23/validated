@@ -84,17 +84,26 @@ class Validated {
 	 */
 	function validate_url() {
 		check_ajax_referer( 'validated_security', 'security' );
-		if (isset($_POST['post_id'])){
-			$post_id = filter_var( $_POST[ 'post_id' ], FILTER_SANITIZE_NUMBER_INT );
-		}
-		
-		if ( !$post_id ) {
-			return $this->process_error( 'Post ID not passed.' );
-		}
+		$post_id = $this->get_post_id();
 		if ( defined( 'VALIDATED_LOCAL' ) && true === VALIDATED_LOCAL ) {
 			return $this->process_post_local( $post_id );
 		}
 		return $this->process_post( $post_id );
+	}
+
+	/**
+	 * Sanitize and validate that post_id is being passed.
+	 * @return string|int
+	 */
+	private function get_post_id() {
+		$post_id = 0;
+		if ( isset( $_POST[ 'post_id' ] ) ) {
+			$post_id = (int) sanitize_text_field( $_POST[ 'post_id' ] );
+		}
+		if ( 0 == $post_id ) {
+			return $this->process_error( 'Post ID not passed.' );
+		}
+		return $post_id;
 	}
 
 	/**
@@ -106,11 +115,12 @@ class Validated {
 		$checkurl	 = 'http://validator.w3.org/check?uri=' . $url;
 		$request	 = wp_remote_get( $checkurl );
 		if ( is_wp_error( $request ) ) {
-			return $this->process_error();
+			return $this->process_error( $request->get_error_message() );
 		}
+
 		$headers				 = $request[ 'headers' ];
 		$headers[ 'checkurl' ]	 = $checkurl;
-		update_post_meta( $post_id, '__validated', $headers );
+		update_post_meta( (int) $post_id, '__validated', $headers );
 		$result					 = $this->show_results( $headers );
 
 		return wp_send_json_success( array( 'result' => $result, 'type' => 'Live', 'checkurl' => $checkurl ) );
@@ -124,17 +134,16 @@ class Validated {
 		$url		 = get_permalink( $post_id );
 		$checkurl	 = 'http://validator.w3.org/check';
 		$args		 = $this->snag_local_code( $url );
-		if (false === $args){
-			$this->process_error('Error snagging local file.');
+		if ( false === $args ) {
+			$this->process_error( 'Error snagging local file.' );
 		}
-		$request	 = wp_remote_post( $checkurl, $args );
-
+		$request = wp_remote_post( $checkurl, $args );
 		if ( is_wp_error( $request ) ) {
-			return $this->process_error();
+			return $this->process_error( $request->get_error_message() );
 		}
 		$headers				 = $request[ 'headers' ];
 		$headers[ 'checkurl' ]	 = $checkurl . '?uri=' . $url;
-		update_post_meta( $post_id, '__validated', $headers );
+		update_post_meta( (int) $post_id, '__validated', $headers );
 		$result					 = $this->show_results( $headers );
 
 		return wp_send_json_success( array( 'result' => $result, 'type' => 'Local' ) );
@@ -146,8 +155,8 @@ class Validated {
 	 * @return array
 	 */
 	private function snag_local_code( $url ) {
-		$request=wp_remote_get( $url );
-		if (  is_wp_error( $request )){
+		$request = wp_remote_get( $url );
+		if ( is_wp_error( $request ) ) {
 			return false;
 		}
 		$args = array(

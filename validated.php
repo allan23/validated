@@ -28,4 +28,3 @@ define( 'VA_URL', plugin_dir_url( __FILE__ ) );
 
 require_once 'lib/class-validated.php';
 add_action( 'plugins_loaded', array( 'Validated', 'get_instance' ) );
-//$validated=new Validated();

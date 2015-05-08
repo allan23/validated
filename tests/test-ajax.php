@@ -8,6 +8,13 @@ require_once( ABSPATH . 'wp-admin/includes/ajax-actions.php' );
 class ValidatedAjax extends WP_Ajax_UnitTestCase {
 
 	/**
+	 * JSON encoded mock HTTP response.
+	 * @var string 
+	 */
+	var $mock_data_good	 = '{"headers":{"date":"Fri, 08 May 2015 20:59:06 GMT","server":"Apache\/2.2.22 (Debian)","content-language":"en","x-w3c-validator-recursion":"1","x-w3c-validator-status":"Invalid","x-w3c-validator-errors":"1","x-w3c-validator-warnings":"2","vary":"Accept-Encoding","content-encoding":"gzip","content-length":"8560","connection":"close","content-type":"text\/html; charset=UTF-8"},"body":"","response":{"code":200,"message":"OK"},"cookies":[],"filename":null}';
+	var $mock_data_bad	 = '{"headers":{"date":"Fri, 08 May 2015 21:03:47 GMT","server":"Apache\/2.2.22 (Debian)","content-language":"en","x-w3c-validator-recursion":"1","x-w3c-validator-status":"Abort","connection":"close","content-type":"text\/html; charset=UTF-8"},"body":"","response":{"code":200,"message":"OK"},"cookies":[],"filename":null}';
+
+	/**
 	 * Post ID
 	 * @var int 
 	 */
@@ -30,7 +37,6 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 		// Set up a default request
 		$_POST[ 'security' ] = wp_create_nonce( 'validated_security' );
 		$_POST[ 'action' ]	 = 'validated';
-		$_POST[ 'post_id' ]	 = $this->pid;
 	}
 
 	function tearDown() {
@@ -38,16 +44,74 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 		parent::tearDown();
 	}
 
-	function switch_url( $url ) {
-		remove_filter( 'post_link', array( $this, 'switch_url' ) );
-		return 'http://www.google.com/';
+	/**
+	 * Hijack HTTP request with mock data.
+	 * @param bool|array $return
+	 * @param array $request
+	 * @param string $url
+	 * @return array
+	 */
+	function mock_data( $return = false, $request = array(), $url = '' ) {
+
+		if ( !stristr( $url, 'example.org' ) ) {
+			return false;
+		}
+		remove_filter( 'pre_http_request', array( $this, 'mock_data' ) );
+		return json_decode( $this->mock_data_good, true );
 	}
 
 	/**
-	 * Test out validating http://www.google.com as a public URL.
+	 * Hijack HTTP request with mock data.
+	 * @param bool|array $return
+	 * @param array $request
+	 * @param string $url
+	 * @return array
+	 */
+	function mock_data_bad( $return = false, $request = array(), $url = '' ) {
+
+		if ( !stristr( $url, 'example.org' ) ) {
+			return false;
+		}
+		remove_filter( 'pre_http_request', array( $this, 'mock_data_bad' ) );
+		return json_decode( $this->mock_data_bad, true );
+	}
+
+	function test_ajax_wo_post_id() {
+		add_filter( 'pre_http_request', array( $this, 'mock_data' ), 1, 3 ); // Hijack HTTP requests for unit tests.
+
+		try {
+			$this->_handleAjax( 'validated' );
+		} catch ( WPAjaxDieContinueException $e ) {
+			unset( $e );
+		}
+
+		$response = json_decode( $this->_last_response );
+
+		$this->assertFalse( $response->success );
+	}
+
+	function test_ajax_w_string_post_id() {
+		add_filter( 'pre_http_request', array( $this, 'mock_data' ), 1, 3 ); // Hijack HTTP requests for unit tests.
+
+		$_POST[ 'post_id' ] = 'My jumbled string';
+		try {
+			$this->_handleAjax( 'validated' );
+		} catch ( WPAjaxDieContinueException $e ) {
+			unset( $e );
+		}
+
+		$response = json_decode( $this->_last_response );
+
+		$this->assertFalse( $response->success );
+	}
+
+	/**
+	 * Test AJAX call with public-facing URL. (Good mock data HTTP response)
 	 */
 	function test_ajax() {
-		add_filter( 'post_link', array( $this, 'switch_url' ) );
+		add_filter( 'pre_http_request', array( $this, 'mock_data' ), 1, 3 ); // Hijack HTTP requests for unit tests.
+
+		$_POST[ 'post_id' ] = $this->pid;
 
 		// Make the request
 		try {
@@ -55,16 +119,39 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 		} catch ( WPAjaxDieContinueException $e ) {
 			unset( $e );
 		}
+
 		$response = json_decode( $this->_last_response );
 
 		$this->assertTrue( $response->success );
 	}
 
 	/**
-	 * Test out validating http://www.google.com/ as a private URL.
+	 * Testing response from non-public URL.
+	 */
+	function test_ajax_w_bad_url(){
+		add_filter( 'pre_http_request', array( $this, 'mock_data_bad' ), 1, 3 ); // Hijack HTTP requests for unit tests.
+
+		$_POST[ 'post_id' ] = $this->pid;
+
+		// Make the request
+		try {
+			$this->_handleAjax( 'validated' );
+		} catch ( WPAjaxDieContinueException $e ) {
+			unset( $e );
+		}
+
+		$response = json_decode( $this->_last_response );
+
+		$this->assertTrue( $response->success );
+	}
+	
+	/**
+	 * Test AJAX call with non-public URL / local development. (Good mock data HTTP response)
 	 */
 	function test_ajax_local() {
-		add_filter( 'post_link', array( $this, 'switch_url' ) );
+		add_filter( 'pre_http_request', array( $this, 'mock_data' ), 1, 3 ); // Hijack HTTP requests for unit tests.
+
+		$_POST[ 'post_id' ] = $this->pid;
 		// Activate Local Dev Testing
 		if ( !defined( 'VALIDATED_LOCAL' ) ) {
 			define( 'VALIDATED_LOCAL', true );
