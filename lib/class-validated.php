@@ -64,7 +64,9 @@ class Validated {
 	 * @param int $post_id
 	 */
 	function display_columns( $column, $post_id ) {
-
+		if ( 'publish' != get_post_status( $post_id ) ) {
+			return;
+		}
 		switch ( $column ) {
 			case 'validated_is_valid':
 				$headers = get_post_meta( $post_id, '__validated', true );
@@ -102,6 +104,9 @@ class Validated {
 		}
 		if ( 0 == $post_id ) {
 			return $this->process_error( 'Post ID not passed.' );
+		}
+		if ( 'publish' != get_post_status( $post_id ) ) {
+			return $this->process_error( 'Post is not published.' );
 		}
 		return $post_id;
 	}

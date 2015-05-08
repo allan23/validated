@@ -21,6 +21,12 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 	var $pid;
 
 	/**
+	 * Post ID of a draft.
+	 * @var int 
+	 */
+	var $draft_id;
+
+	/**
 	 * Set up the test fixture
 	 */
 	public function setUp() {
@@ -29,6 +35,13 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 			'post_type'		 => 'page',
 			'post_title'	 => 'Test Post',
 			'post_content'	 => 'Some text'
+		) );
+
+		$this->draft_id = $this->factory->post->create( array(
+			'post_type'		 => 'page',
+			'post_title'	 => 'Test Draft Post',
+			'post_content'	 => 'Some text',
+			'post_status'	 => 'draft'
 		) );
 
 		// Become an administrator
@@ -106,6 +119,24 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 	}
 
 	/**
+	 * If a post is a draft, it shouldn't be checked.
+	 */
+	function test_ajax_w_draft() {
+		add_filter( 'pre_http_request', array( $this, 'mock_data' ), 1, 3 ); // Hijack HTTP requests for unit tests.
+
+		$_POST[ 'post_id' ] = $this->draft_id;
+		try {
+			$this->_handleAjax( 'validated' );
+		} catch ( WPAjaxDieContinueException $e ) {
+			unset( $e );
+		}
+
+		$response = json_decode( $this->_last_response );
+
+		$this->assertFalse( $response->success );
+	}
+
+	/**
 	 * Test AJAX call with public-facing URL. (Good mock data HTTP response)
 	 */
 	function test_ajax() {
@@ -128,7 +159,7 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 	/**
 	 * Testing response from non-public URL.
 	 */
-	function test_ajax_w_bad_url(){
+	function test_ajax_w_bad_url() {
 		add_filter( 'pre_http_request', array( $this, 'mock_data_bad' ), 1, 3 ); // Hijack HTTP requests for unit tests.
 
 		$_POST[ 'post_id' ] = $this->pid;
@@ -144,7 +175,7 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 
 		$this->assertTrue( $response->success );
 	}
-	
+
 	/**
 	 * Test AJAX call with non-public URL / local development. (Good mock data HTTP response)
 	 */
