@@ -39,4 +39,18 @@ class ValidatedTests extends WP_UnitTestCase {
 		$this->assertEquals( '', get_post_meta( $this->pid, '__validated', true ) );
 	}
 
+	function test_local_dom() {
+		$html		 = '<html><body><ol id="error_loop"><li><span>remove me</span><span>test</span><p>remove me</p></li></ol></body></html>';
+		$expected	 = '<li><span>test</span></li>';
+		$the_test	 = Validated_DOM::get_html( $html, 'Invalid' );
+		$this->assertEquals( $the_test, $expected );
+	}
+
+	function test_local_dom_valid() {
+		$html		 = '<html><body><ol id="error_loop"><li><span>remove me</span><span>test</span><p>remove me</p></li></ol></body></html>';
+		$the_test	 = Validated_DOM::get_html( $html, 'Valid' );
+		$expected	 = '<li><span class="validated_is_valid"><span class="dashicons dashicons-yes"></span> Valid</span></li>';
+		$this->assertEquals( $the_test, $expected );
+	}
+
 }

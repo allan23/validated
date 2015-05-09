@@ -13,7 +13,9 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 	 */
 	var $mock_data_good	 = '{"headers":{"date":"Fri, 08 May 2015 20:59:06 GMT","server":"Apache\/2.2.22 (Debian)","content-language":"en","x-w3c-validator-recursion":"1","x-w3c-validator-status":"Invalid","x-w3c-validator-errors":"1","x-w3c-validator-warnings":"2","vary":"Accept-Encoding","content-encoding":"gzip","content-length":"8560","connection":"close","content-type":"text\/html; charset=UTF-8"},"body":"","response":{"code":200,"message":"OK"},"cookies":[],"filename":null}';
 	var $mock_data_bad	 = '{"headers":{"date":"Fri, 08 May 2015 21:03:47 GMT","server":"Apache\/2.2.22 (Debian)","content-language":"en","x-w3c-validator-recursion":"1","x-w3c-validator-status":"Abort","connection":"close","content-type":"text\/html; charset=UTF-8"},"body":"","response":{"code":200,"message":"OK"},"cookies":[],"filename":null}';
+	var $mock_data_valid	 = '{"headers":{"date":"Fri, 08 May 2015 21:03:47 GMT","server":"Apache\/2.2.22 (Debian)","content-language":"en","x-w3c-validator-recursion":"1","x-w3c-validator-status":"Valid","connection":"close","content-type":"text\/html; charset=UTF-8"},"body":"","response":{"code":200,"message":"OK"},"cookies":[],"filename":null}';
 
+	
 	/**
 	 * Post ID
 	 * @var int 
@@ -88,6 +90,22 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 		remove_filter( 'pre_http_request', array( $this, 'mock_data_bad' ) );
 		return json_decode( $this->mock_data_bad, true );
 	}
+	
+		/**
+	 * Hijack HTTP request with mock data.
+	 * @param bool|array $return
+	 * @param array $request
+	 * @param string $url
+	 * @return array
+	 */
+	function mock_data_good( $return = false, $request = array(), $url = '' ) {
+
+		if ( !stristr( $url, 'example.org' ) ) {
+			return false;
+		}
+		remove_filter( 'pre_http_request', array( $this, 'mock_data_good' ) );
+		return json_decode( $this->mock_data_valid, true );
+	}
 
 	function test_ajax_wo_post_id() {
 		add_filter( 'pre_http_request', array( $this, 'mock_data' ), 1, 3 ); // Hijack HTTP requests for unit tests.
@@ -154,6 +172,7 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 		$response = json_decode( $this->_last_response );
 
 		$this->assertTrue( $response->success );
+		$this->assertFalse( $response->data->report );
 	}
 
 	/**
@@ -195,8 +214,11 @@ class ValidatedAjax extends WP_Ajax_UnitTestCase {
 			unset( $e );
 		}
 
-		$response = json_decode( $this->_last_response );
+		$response	 = json_decode( $this->_last_response );
 		$this->assertTrue( $response->success );
+
 	}
+	
+
 
 }

@@ -26,8 +26,7 @@ class Validated_DOM {
 			if ( 0 != $the_p->length ) {
 				$item->removeChild( $the_p->item( 0 ) );
 			}
-			$item_html = $doc->saveHTML( $errors->item( $c ) ) . '<hr/>';
-			$return .= str_replace( 'img src="images', 'img src="http://validator.w3.org/images', $item_html );
+			return $doc->saveHTML( $errors->item( $c ) );
 		}
 		return $return;
 	}
