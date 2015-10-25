@@ -7,6 +7,8 @@ class ValidatedTests extends WP_UnitTestCase {
 	 * @var int 
 	 */
 	var $pid;
+	var $mock_valid	 = '{"url":"http://www.example.org","messages":[{"type":"info","message":"The Content-Type was “text/html”. Using the HTML parser."},{"type":"info","message":"Using the schema for HTML5 + SVG 1.1 + MathML 3.0 + RDFa Lite 1.1."}]}';
+	var $mock_invalid = '{"url":"http://www.example.org/","messages":[{"type":"info","message":"The Content-Type was “text/html”. Using the HTML parser."},{"type":"info","message":"Using the schema for HTML5 + SVG 1.1 + MathML 3.0 + RDFa Lite 1.1."},{"type":"error","lastLine":71,"firstLine":70,"lastColumn":34,"firstColumn":1521,"message":"Attribute “width” not allowed on element “blockquote” at this point.","extract":"tweet:</p><blockquote\nclass=\"twitter-tweet\" width=\"500\"><p>We&","hiliteStart":10,"hiliteLength":46}]}';
 
 	/**
 	 * Set up the test fixture
@@ -39,18 +41,18 @@ class ValidatedTests extends WP_UnitTestCase {
 		$this->assertEquals( '', get_post_meta( $this->pid, '__validated', true ) );
 	}
 
-	function test_local_dom() {
-		$html		 = '<html><body><ol id="error_loop"><li><span>remove me</span><span>test</span><p>remove me</p></li></ol></body></html>';
-		$expected	 = '<li><span>test</span></li>';
-		$the_test	 = Validated_DOM::get_html( $html, 'Invalid' );
-		$this->assertEquals( $the_test, $expected );
+	function test_check_invalid() {
+
+		$errors = Validated::get_instance()->check_errors( json_decode( $this->mock_invalid ) );
+
+		$this->assertEquals( 1, $errors );
 	}
 
-	function test_local_dom_valid() {
-		$html		 = '<html><body><ol id="error_loop"><li><span>remove me</span><span>test</span><p>remove me</p></li></ol></body></html>';
-		$the_test	 = Validated_DOM::get_html( $html, 'Valid' );
-		$expected	 = '<li><span class="validated_is_valid"><span class="dashicons dashicons-yes"></span> Valid</span></li>';
-		$this->assertEquals( $the_test, $expected );
+	function test_check_valid() {
+
+		$errors = Validated::get_instance()->check_errors( json_decode( $this->mock_valid ) );
+
+		$this->assertEquals( 0, $errors );
 	}
 
 }

@@ -1,52 +1,49 @@
 /*! Validated - v2.1.0
  * http://www.allancollins.net
  * Copyright (c) 2015; * Licensed GPLv2+ */
-/*global ajax_object:false */
-var val_check;
-function validated_check_now( i ) {
-    return function ( event ) {
+/*global ajax_object:false, jQuery */
+jQuery( document ).ready( function ( $ ) {
+    $( document.body ).on( 'click', '.a_validated_check', function ( event ) {
         event.preventDefault();
-        var post_id = val_check[i].getAttribute( 'data-pid' );
-        var checking_el = document.getElementById( 'validated_checking_' + post_id );
-        var validated_el = document.getElementById( 'validated_' + post_id );
-        document.getElementById( 'validator-results' ).innerHTML = '<p><img src="' + ajax_object.val_loading + '"><br/>Loading...</p>';
+        var post_id = $( this ).data( 'pid' );
+        var checking_el = $( '#validated_checking_' + post_id );
+        var validated_el = $( '#validated_' + post_id );
 
-        checking_el.style.display = 'block';
-        validated_el.style.display = 'none';
-        validated_el.innerHTML = '';
-
-
-        var xhr = new XMLHttpRequest();
-        var send_data = 'action=validated&security=' + ajax_object.security + '&post_id=' + post_id;
-        xhr.open( 'POST', ajax_object.ajax_url, true );
-        xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8' );
-        xhr.onreadystatechange = function () {
-            if ( 4 === xhr.readyState ) {
-                checking_el.style.display = 'none';
-                var validated_html = JSON.parse( xhr.responseText );
-                if ( false !== validated_html.data.report ) {
-                    var validated_modal = document.getElementById( 'TB_ajaxContent' );
-                    if ( typeof validated_html.data.report === undefined ) {
-                        validated_modal.innerHTML = '<p>There was an issue between your server and W3C. Please try again.</p>';
-                    } else {
-                        validated_modal.innerHTML = '<p><ol>' + validated_html.data.report + '</ol></p>';
-                    }
-                }
-                validated_el.innerHTML = validated_html.data.result;
-                validated_el.style.display = 'block';
-            }
+        checking_el.show();
+        validated_el.hide();
+        validated_el.html( '' );
+        var data = {
+            'action': 'validated',
+            'security': ajax_object.security,
+            'post_id': post_id
         };
+        jQuery.post( ajax_object.ajax_url, data, function ( validated_html ) {
+            checking_el.hide();
+            validated_el.html( validated_html.data.result );
+            validated_el.show();
+        } );
+    } );
 
-        xhr.send( send_data );
-    };
-}
+    $( document.body ).on( 'click', '.validated_show_report', function ( event ) {
+        event.preventDefault();
+        var post_id = $( this ).data( 'pid' );
 
+        var data = {
+            'action': 'validated_results',
+            'security': ajax_object.security,
+            'post_id': post_id
+        };
+        jQuery.post( ajax_object.ajax_url, data, function ( validated_html ) {
 
-window.onload = function () {
-    val_check = document.querySelectorAll( '.a_validated_check' );
-    var i;
-    for ( i = 0; i < val_check.length; i++ ) {
-        val_check[i].addEventListener( 'click', validated_check_now( i ) );
-    }
-};
+            if ( false !== validated_html.data.report ) {
+                var validated_modal = $( '#TB_ajaxContent' );
+                if ( typeof validated_html.data.report === undefined ) {
+                    validated_modal.html( '<p>There was an issue between your server and W3C. Please try again.</p>' );
+                } else {
+                    validated_modal.html( '<p>' + validated_html.data + '</p>' );
+                }
 
+            }
+        } );
+    } );
+} );

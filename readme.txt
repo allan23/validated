@@ -3,8 +3,8 @@ Contributors: collinsinternet
 Donate link: http://www.allancollins.net
 Tags: W3C, Validation, html, xhtml, code
 Requires at least: 3.7
-Tested up to: 4.2.1
-Stable tag: 2.1.0
+Tested up to: 4.3.1
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,22 +28,19 @@ Want to contribute? Fork it: https://github.com/allan23/validated
 
 = What does this plugin do? =
 
-This plugin will send the URL of your page or post to the W3C Validator to verify that you have valid HTML code.
+This plugin will send the URL of your page or post to the W3C Validator API to verify that you have valid HTML code.
 
 = Does this plugin automatically correct any validation errors? =
 
-No. If your page or post is invalid, a link to the W3C Validator is provided to show you what needs to be fixed.
-
-= I'm getting "Something went wrong" errors.  What should I do? =
-
-Verify that your page or post URL can be accessed publicly.  At this time, this plugin cannot test local/private development installations.  If you still encounter errors, please let me know by submitting it to the support forum here: http://wordpress.org/support/plugin/validated
+No. If your page or post is invalid, a link is provided to show you what needs to be fixed.
 
 
 == Changelog ==
 
 = 2.1.0 =
-* JS performance tweaks.
+* Utilizes the W3C API instead of attempting to use the web-based validator.
 * Displaying error results in a modal instead of a new window.
+* Support for local development (or non-public URLs).
 
 = 2.0.0 =
 * Complete revamp of 1.0.2.

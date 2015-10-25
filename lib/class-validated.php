@@ -6,10 +6,10 @@
 class Validated {
 
 	/**
-	 * Is local dev activated?
-	 * @var bool 
+	 * API URL for the W3C Validator.
+	 * @var string 
 	 */
-	var $is_local = false;
+	var $api_url = 'https://validator.nuq/';
 
 	/**
 	 * Singleton instance
@@ -41,6 +41,7 @@ class Validated {
 		add_action( 'manage_pages_custom_column', array( $this, 'display_columns' ), 10, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_script' ) );
 		add_action( 'wp_ajax_validated', array( $this, 'validate_url' ) );
+		add_action( 'wp_ajax_validated_results', array( $this, 'generate_report' ) );
 		add_action( 'save_post', array( $this, 'save_post' ) );
 		add_action( 'admin_footer', array( $this, 'footer' ) );
 	}
@@ -52,11 +53,11 @@ class Validated {
 	function load_script() {
 		wp_enqueue_script( 'thickbox' );
 		wp_enqueue_style( 'thickbox' );
-		wp_enqueue_style( 'validated-css', VA_URL . "assets/css/style.min.css" );
-		wp_enqueue_script( 'validated-js', VA_URL . "assets/js/script.min.js" );
+		wp_enqueue_style( 'validated-css', VA_URL . 'assets/css/style.min.css' );
+		wp_enqueue_script( 'validated-js', VA_URL . 'assets/js/script.min.js', array( 'jquery' ) );
 		wp_localize_script( 'validated-js', 'ajax_object', array(
 			'ajax_url'		 => admin_url( 'admin-ajax.php' ),
-			'security'		 => wp_create_nonce( "validated_security" ),
+			'security'		 => wp_create_nonce( 'validated_security' ),
 			'val_loading'	 => esc_url( VA_URL ) . '/assets/images/load.gif'
 		) );
 	}
@@ -83,32 +84,49 @@ class Validated {
 		}
 		switch ( $column ) {
 			case 'validated_is_valid':
-				$headers = get_post_meta( $post_id, '__validated', true );
+				$results = get_post_meta( $post_id, '__validated', true );
 				echo '<div id="validated_' . esc_attr( $post_id ) . '">';
-				$this->show_results( $headers, false );
+				$this->show_results( $results, $post_id );
 				echo '</div>';
 				echo '<div id="validated_checking_' . esc_attr( $post_id ) . '" class="validated_loading"><img src="' . esc_url( VA_URL ) . '/assets/images/load.gif" alt="Loading"><br>Checking Now...</div>';
 				break;
 			case 'validated_check':
-				$class	 = '';
-				if ( $this->is_local ) {
-					$class = 'thickbox';
-				}
-				echo '<a title="Validator Results" href="#TB_inline?width=600&height=550&inlineId=validator-results" class="button-primary a_validated_check ' . $class . '" data-pid="' . esc_attr( $post_id ) . '"><span class="dashicons dashicons-search"></span> Check</a>';
+				echo '<a title="Validator Results" href="#" class="button-primary a_validated_check" data-pid="' . esc_attr( $post_id ) . '"><span class="dashicons dashicons-search"></span> Check</a>';
 				break;
 		}
 	}
 
 	/**
-	 * AJAX response.
+	 * AJAX callback to check HTML for certain post_id.
 	 */
 	function validate_url() {
 		check_ajax_referer( 'validated_security', 'security' );
 		$post_id = $this->get_post_id();
-		if ( $this->is_local ) {
-			return $this->process_post_local( $post_id );
+		$check	 = $this->call_api( $post_id );
+		if ( is_wp_error( $check ) ) {
+			return $this->process_error( $check->get_error_message() );
 		}
-		return $this->process_post( $post_id );
+		$errors				 = $this->check_errors( $check );
+		$results			 = array(
+			'errors'	 => $errors,
+			'results'	 => $check
+		);
+		update_post_meta( (int) $post_id, '__validated', $results );
+		$results[ 'result' ] = $this->show_results( $results, $post_id, false );
+		return (0 == $errors) ? wp_send_json_success( $results ) : wp_send_json_error( $results );
+	}
+
+	/**
+	 * AJAX callback to generate validation report for thickbox modal.
+	 */
+	function generate_report() {
+		check_ajax_referer( 'validated_security', 'security' );
+		$post_id = $this->get_post_id();
+		$results = get_post_meta( $post_id, '__validated', true );
+		ob_start();
+		include VA_PATH . 'views/report.php';
+		$report	 = ob_get_clean();
+		return wp_send_json_success( $report );
 	}
 
 	/**
@@ -130,105 +148,56 @@ class Validated {
 	}
 
 	/**
-	 * Sends the post/page permalink URL to the W3C Validator, saves results into postmeta, and returns results.
-	 * @param type $post_id
-	 */
-	private function process_post( $post_id ) {
-		$url		 = get_permalink( $post_id );
-		$checkurl	 = 'http://validator.w3.org/check?uri=' . $url;
-		$request	 = wp_safe_remote_get( $checkurl );
-		if ( is_wp_error( $request ) ) {
-			return $this->process_error( $request->get_error_message() );
-		}
-
-		$headers				 = $request[ 'headers' ];
-		$headers[ 'checkurl' ]	 = $checkurl;
-		update_post_meta( (int) $post_id, '__validated', $headers );
-		$result					 = $this->show_results( $headers );
-		$report					 = false;
-
-		return wp_send_json_success( array( 'result' => $result, 'type' => 'Live', 'checkurl' => $checkurl, 'report' => $report ) );
-	}
-
-	/**
-	 * Sends page HTML to W3C Validator.
-	 * @param int $post_id
-	 */
-	private function process_post_local( $post_id ) {
-		$url		 = get_permalink( $post_id );
-		$checkurl	 = 'http://validator.w3.org/check';
-		$args		 = $this->snag_local_code( $url );
-		if ( false === $args ) {
-			$this->process_error( 'Error snagging local file.' );
-		}
-		$request = wp_safe_remote_post( $checkurl, $args );
-		if ( is_wp_error( $request ) ) {
-			return $this->process_error( $request->get_error_message() );
-		}
-		$headers				 = $request[ 'headers' ];
-		$headers[ 'checkurl' ]	 = $checkurl . '?uri=' . $url;
-		update_post_meta( (int) $post_id, '__validated', $headers );
-		$result					 = $this->show_results( $headers, true, $post_id );
-		$report					 = Validated_DOM::get_html( wp_remote_retrieve_body( $request ), $headers[ 'x-w3c-validator-status' ] );
-		return wp_send_json_success( array( 'result' => $result, 'type' => 'Local', 'report' => $report ) );
-	}
-
-	/**
-	 * Snags local HTML and returns wp_remote arguments.
+	 * Snags local HTML.
 	 * @param string $url Local URL
-	 * @return array
+	 * @return string
 	 */
 	private function snag_local_code( $url ) {
 		$request = wp_safe_remote_get( $url );
 		if ( is_wp_error( $request ) ) {
 			return false;
 		}
-		$args = array(
-			'body' => array(
-				'fragment' => wp_remote_retrieve_body( $request )
-			)
-		);
-		return $args;
+		return wp_remote_retrieve_body( $request );
 	}
 
 	/**
 	 * Send back response because of error.
 	 */
 	private function process_error( $msg = '' ) {
-		$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-		return wp_send_json_error( array( 'result' => $result, 'msg' => $msg ) );
+		update_post_meta( (int) $this->get_post_id(), '__validated', '' );
+		$result = '<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> ' . esc_html( $msg ) . '</span>';
+		return wp_send_json_error( array( 'result' => $result ) );
 	}
 
 	/**
-	 * Takes returned HTTP headers from W3C Validator request and parses data.
-	 * @param $headers[] $headers
-	 * @param bool $return
+	 * Takes returned results from W3C Validator request lets you know if valid or not.
+	 * @param int $errors Total errors.
+	 * @param object $results Return results object.
+	 * @param int $post_id The Post ID.
+	 * @param bool $echo Should this function echo out the HTML?
+	 * @return string $return
 	 */
-	function show_results( $headers, $return = true, $post_id = 0 ) {
-		if ( !$headers ) {
+	function show_results( $results, $post_id, $echo = true ) {
+		if ( !$results || !isset( $results[ 'errors' ] ) ) {
 			return;
 		}
-		$result = '';
-		if ( isset( $headers[ 'x-w3c-validator-status' ] ) ) {
-			if ( 'Valid' === $headers[ 'x-w3c-validator-status' ] ) {
-				$result.= '<span class="validated_is_valid"><span class="dashicons dashicons-yes"></span> Valid</span>';
-			} elseif ( 'Abort' === $headers[ 'x-w3c-validator-status' ] ) {
-				$result.='<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
-			} else {
-				if ( !$this->is_local ) {
-					$result.='<span class="validated_not_valid"><span class="dashicons dashicons-no"></span> <a href="' . esc_url( $headers[ 'checkurl' ] ) . '&TB_iframe=true&width=600&height=550" title="Validation Results" target="_blank" class="thickbox">' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</a></span>';
-				} else {
-					$result.='<span class="validated_not_valid"><span class="dashicons dashicons-no"></span>' . esc_html( $headers[ 'x-w3c-validator-errors' ] ) . ' Errors</span>';
-				}
-			}
-			$result.='<br><small>Last checked: ' . esc_html( $headers[ 'date' ] ) . '</small>';
+		$return = '';
+		$return.='<span class="validated_';
+		$return.=($results[ 'errors' ]) ? 'not_valid' : 'is_valid';
+		$return.='">';
+		$return.='<span class="dashicons dashicons-';
+		$return.=($results[ 'errors' ]) ? 'no' : 'yes';
+		$return.='"></span> ';
+		if ( $results[ 'errors' ] ) {
+			$return.='<a title="Validator Results" href="#TB_inline?width=600&height=350&inlineId=validator-results" class="thickbox validated_show_report" data-pid="' . esc_attr( $post_id ) . '">' . esc_html( $results[ 'errors' ] ) . ' Errors</a>';
 		} else {
-			$result.='<span class="validated_not_valid"><span class="dashicons dashicons-dismiss"></span> Something Went Wrong.</span>';
+			$return.='Valid';
 		}
-		if ( $return ) {
-			return $result;
+		$return.='</span>';
+		if ( $echo ) {
+			echo $return; // XSS ok
 		}
-		echo $result; //XSS ok
+		return $return;
 	}
 
 	/**
@@ -243,8 +212,64 @@ class Validated {
 		delete_post_meta( $post_id, '__validated' );
 	}
 
+	/**
+	 * Adds thickbox div to footer.
+	 */
 	function footer() {
 		echo '<div id="validator-results" style="display:none;"></div>';
+	}
+
+	/**
+	 * Calls the W3C Validator API.
+	 * @param int $post_id Post ID
+	 * @param int $attempt Number of attempts to validate.
+	 * @return boolean|object
+	 */
+	function call_api( $post_id, $attempt = 1 ) {
+		$method		 = (1 == $attempt) ? 'GET' : 'POST';
+		$post_url	 = get_permalink( $post_id );
+		$api_url	 = $this->api_url;
+		$args		 = array(
+			'method' => $method,
+			'body'	 => array(
+				'doc'	 => $post_url,
+				'out'	 => 'json'
+			)
+		);
+
+		if ( 'POST' == $method ) {
+			$args[ 'body' ]		 = $this->snag_local_code( $post_url );
+			$args[ 'headers' ]	 = array(
+				'Content-Type' => 'text/html; charset=UTF-8'
+			);
+			$api_url.='?out=json';
+		}
+
+		$request = wp_remote_request( $api_url, $args );
+		if ( is_wp_error( $request ) ) {
+			return $request;
+		}
+		$response = json_decode( wp_remote_retrieve_body( $request ) );
+		if ( !is_object( $response ) ) {
+			return $this->call_api( $post_id, 2 );
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Gets total number of errors.
+	 * @param object $results
+	 * @return int
+	 */
+	function check_errors( $results ) {
+		$errors = 0;
+		foreach ( $results->messages as $result ) {
+			if ( 'error' == $result->type ) {
+				$errors++;
+			}
+		}
+		return $errors;
 	}
 
 }
