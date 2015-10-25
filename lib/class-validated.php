@@ -9,7 +9,7 @@ class Validated {
 	 * API URL for the W3C Validator.
 	 * @var string 
 	 */
-	var $api_url = 'https://validator.nuq/';
+	var $api_url = 'https://validator.nu/';
 
 	/**
 	 * Singleton instance
@@ -32,9 +32,6 @@ class Validated {
 	 * Actions and Filters
 	 */
 	function __construct() {
-		if ( defined( 'VALIDATED_LOCAL' ) && true === VALIDATED_LOCAL ) {
-			$this->is_local = true;
-		}
 		add_filter( 'manage_posts_columns', array( $this, 'post_columns' ) );
 		add_filter( 'manage_pages_columns', array( $this, 'post_columns' ) );
 		add_action( 'manage_posts_custom_column', array( $this, 'display_columns' ), 10, 2 );
@@ -177,7 +174,7 @@ class Validated {
 	 * @param bool $echo Should this function echo out the HTML?
 	 * @return string $return
 	 */
-	function show_results( $results, $post_id, $echo = true ) {
+	private function show_results( $results, $post_id, $echo = true ) {
 		if ( !$results || !isset( $results[ 'errors' ] ) ) {
 			return;
 		}
@@ -225,7 +222,7 @@ class Validated {
 	 * @param int $attempt Number of attempts to validate.
 	 * @return boolean|object
 	 */
-	function call_api( $post_id, $attempt = 1 ) {
+	private function call_api( $post_id, $attempt = 1 ) {
 		$method		 = (1 == $attempt) ? 'GET' : 'POST';
 		$post_url	 = get_permalink( $post_id );
 		$api_url	 = $this->api_url;

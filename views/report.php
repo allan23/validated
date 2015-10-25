@@ -20,4 +20,3 @@ foreach ( $results[ 'results' ]->messages as $item ):
 	<hr>
 	<?php
 endforeach;
-?>
