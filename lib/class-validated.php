@@ -39,8 +39,10 @@ class Validated {
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_script' ) );
 		add_action( 'wp_ajax_validated', array( $this, 'validate_url' ) );
 		add_action( 'wp_ajax_validated_results', array( $this, 'generate_report' ) );
+		add_action( 'wp_ajax_validated_bulk', array( $this, 'bulk_validate' ) );
 		add_action( 'save_post', array( $this, 'save_post' ) );
 		add_action( 'admin_footer', array( $this, 'footer' ) );
+		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 	}
 
 	/*
@@ -267,6 +269,79 @@ class Validated {
 			}
 		}
 		return $errors;
+	}
+
+	/**
+	 * Hook to add admin menu items.
+	 */
+	function add_menu() {
+		add_management_page( 'Bulk Validation', 'Bulk Validate', 'edit_posts', 'validation', array( $this, 'bulk_validate_page' ) );
+	}
+
+	/**
+	 * Bulk validation view page.
+	 */
+	function bulk_validate_page() {
+		ob_start();
+		include VA_PATH . 'views/bulk.php';
+		echo ob_get_clean();
+	}
+
+	/**
+	 * Ajax callback for bulk validation.
+	 */
+	function bulk_validate() {
+		check_ajax_referer( 'validated_security', 'security' );
+		$offset		 = filter_input( INPUT_POST, 'offset', FILTER_SANITIZE_NUMBER_INT );
+		$limit		 = filter_input( INPUT_POST, 'limit', FILTER_SANITIZE_NUMBER_INT );
+		$error_count = filter_input( INPUT_POST, 'error_count', FILTER_SANITIZE_NUMBER_INT );
+		$args		 = array(
+			'posts_per_page' => $limit,
+			'offset'		 => $offset,
+			'fields'		 => 'ids',
+			'post_status'	 => 'publish',
+		);
+		$query		 = new WP_Query( $args );
+		$total		 = $query->found_posts;
+
+		if ( 0 < $total ) {
+			$error_count = ((int) $this->check_posts( $query->posts )) + $error_count;
+		}
+		$progress	 = floor( (($offset + $limit) / $total) * 100 );
+		$progress	 = (100 < $progress || 0 == $total) ? 100 : $progress;
+		$results	 = array(
+			'progress'		 => $progress,
+			'total'			 => $total,
+			'limit'			 => $limit,
+			'offset'		 => ($offset + $limit),
+			'error_count'	 => $error_count
+		);
+		wp_send_json( $results );
+	}
+
+	/**
+	 * Takes array of post IDs and checks W3C validation.
+	 * @param array $posts Array of post IDs.
+	 * @return int Total posts with errors.
+	 */
+	function check_posts( $posts ) {
+		$error_count = 0;
+		foreach ( $posts as $post_id ) {
+			$check = $this->call_api( $post_id );
+			if ( is_wp_error( $check ) ) {
+				continue;
+			}
+			$errors	 = $this->check_errors( $check );
+			$results = array(
+				'errors'	 => $errors,
+				'results'	 => $check
+			);
+			update_post_meta( (int) $post_id, '__validated', $results );
+			if ( 0 < $errors ) {
+				$error_count++;
+			}
+		}
+		return $error_count;
 	}
 
 }

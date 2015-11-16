@@ -1,1 +1,1 @@
-a.validated_check span{vertical-align:middle}.validated_is_valid{color:green}.validated_not_valid{color:red}.validated_loading{display:none}
+a.validated_check span{vertical-align:middle}.validated_is_valid{color:green}.validated_not_valid{color:red}.validated_loading{display:none}#validated_progress_bar{width:100%;height:25px;background:silver;display:none}#validated_progress{width:0;height:100%;background:#0073AA}#validated_bulk_results{text-align:right}

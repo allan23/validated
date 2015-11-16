@@ -46,4 +46,25 @@ jQuery( document ).ready( function ( $ ) {
             }
         } );
     } );
+    $( document.body ).on( 'submit', '#validate_bulk', function ( event ) {
+        event.preventDefault();
+        jQuery( '#validated_progress_bar' ).slideDown();
+        bulk_validation( 0, 1,0 );
+    } );
+    var bulk_validation = function ( offset, limit,error_count ) {
+        var data = {
+            'action': 'validated_bulk',
+            'security': ajax_object.security,
+            'offset': offset,
+            'limit': limit,
+            'error_count': error_count
+        };
+        jQuery.post( ajax_object.ajax_url, data, function ( response ) {
+            jQuery( '#validated_progress' ).css( 'width', response.progress + '%' );
+            jQuery('#validated_bulk_results').html('Checked: ' + response.offset + '/' + response.total + ' | ' + response.error_count + ' with errors');
+            if ( response.progress < 100 ) {
+                bulk_validation( response.offset, response.limit, response.error_count );
+            }
+        } );
+    };
 } );
