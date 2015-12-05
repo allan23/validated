@@ -34,6 +34,8 @@ class Validated {
 	function __construct() {
 		add_filter( 'manage_posts_columns', array( $this, 'post_columns' ) );
 		add_filter( 'manage_pages_columns', array( $this, 'post_columns' ) );
+		add_filter( 'manage_edit-post_sortable_columns', array( $this, 'post_sort_columns' ) );
+		add_filter( 'manage_edit-page_sortable_columns', array( $this, 'post_sort_columns' ) );
 		add_action( 'manage_posts_custom_column', array( $this, 'display_columns' ), 10, 2 );
 		add_action( 'manage_pages_custom_column', array( $this, 'display_columns' ), 10, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_script' ) );
@@ -41,6 +43,7 @@ class Validated {
 		add_action( 'wp_ajax_validated_results', array( $this, 'generate_report' ) );
 		add_action( 'save_post', array( $this, 'save_post' ) );
 		add_action( 'admin_footer', array( $this, 'footer' ) );
+		add_action( 'pre_get_posts', array( $this, 'validation_sort' ) );
 	}
 
 	/*
@@ -67,6 +70,16 @@ class Validated {
 	function post_columns( $columns ) {
 		$columns[ 'validated_is_valid' ] = 'W3C Validation';
 		$columns[ 'validated_check' ]	 = 'Check Validation';
+		return $columns;
+	}
+
+	/**
+	 * Filter the sortable columns on pages and posts.
+	 * @param array $columns
+	 * @return array
+	 */
+	function post_sort_columns( $columns ) {
+		$columns[ 'validated_is_valid' ] = 'validation';
 		return $columns;
 	}
 
@@ -267,6 +280,19 @@ class Validated {
 			}
 		}
 		return $errors;
+	}
+
+	function validation_sort($query) {
+		if ( !is_admin() ) {
+			return;
+		}
+
+		$orderby = $query->get( 'orderby' );
+
+		if ( 'validation' == $orderby ) {
+			$query->set( 'meta_key', '__validated' );
+			$query->set( 'orderby', 'meta_value' );
+		}
 	}
 
 }
