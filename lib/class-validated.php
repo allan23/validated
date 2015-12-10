@@ -75,6 +75,7 @@ class Validated {
 
 	/**
 	 * Filter the sortable columns on pages and posts.
+	 * Makes the validation column stortable.
 	 * @param array $columns
 	 * @return array
 	 */
@@ -89,7 +90,7 @@ class Validated {
 	 * @param int $post_id
 	 */
 	function display_columns( $column, $post_id ) {
-		if ( 'publish' != get_post_status( $post_id ) ) {
+		if ( 'publish' !== get_post_status( $post_id ) ) {
 			return;
 		}
 		switch ( $column ) {
@@ -123,7 +124,7 @@ class Validated {
 		);
 		update_post_meta( (int) $post_id, '__validated', $results );
 		$results[ 'result' ] = $this->show_results( $results, $post_id, false );
-		return (0 == $errors) ? wp_send_json_success( $results ) : wp_send_json_error( $results );
+		return (0 === $errors) ? wp_send_json_success( $results ) : wp_send_json_error( $results );
 	}
 
 	/**
@@ -146,12 +147,12 @@ class Validated {
 	private function get_post_id() {
 		$post_id = 0;
 		if ( isset( $_POST[ 'post_id' ] ) ) {
-			$post_id = (int) sanitize_text_field( $_POST[ 'post_id' ] );
+			$post_id = (int) sanitize_text_field( wp_unslash($_POST[ 'post_id' ]) );
 		}
-		if ( 0 == $post_id ) {
+		if ( 0 === $post_id ) {
 			return $this->process_error( 'Post ID not passed.' );
 		}
-		if ( 'publish' != get_post_status( $post_id ) ) {
+		if ( 'publish' !== get_post_status( $post_id ) ) {
 			return $this->process_error( 'Post is not published.' );
 		}
 		return $post_id;
@@ -236,7 +237,7 @@ class Validated {
 	 * @return boolean|object
 	 */
 	private function call_api( $post_id, $attempt = 1 ) {
-		$method		 = (1 == $attempt) ? 'GET' : 'POST';
+		$method		 = (1 === $attempt) ? 'GET' : 'POST';
 		$post_url	 = get_permalink( $post_id );
 		$api_url	 = $this->api_url;
 		$args		 = array(
@@ -247,7 +248,7 @@ class Validated {
 			)
 		);
 
-		if ( 'POST' == $method ) {
+		if ( 'POST' === $method ) {
 			$args[ 'body' ]		 = $this->snag_local_code( $post_url );
 			$args[ 'headers' ]	 = array(
 				'Content-Type' => 'text/html; charset=UTF-8'
@@ -275,13 +276,17 @@ class Validated {
 	function check_errors( $results ) {
 		$errors = 0;
 		foreach ( $results->messages as $result ) {
-			if ( 'error' == $result->type ) {
+			if ( 'error' === $result->type ) {
 				$errors++;
 			}
 		}
 		return $errors;
 	}
 
+	/**
+	 * pre_get_posts filter to order posts by their validated meta value.
+	 * @param WP_Query $query
+	 */
 	function validation_sort($query) {
 		if ( !is_admin() ) {
 			return;
@@ -289,7 +294,7 @@ class Validated {
 
 		$orderby = $query->get( 'orderby' );
 
-		if ( 'validation' == $orderby ) {
+		if ( 'validation' === $orderby ) {
 			$query->set( 'meta_key', '__validated' );
 			$query->set( 'orderby', 'meta_value' );
 		}
