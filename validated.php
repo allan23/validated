@@ -4,7 +4,7 @@
   Plugin Name: Validated
   Plugin URI: http://wordpress.org/plugins/validated/
   Description: W3C validation on pages and posts.
-  Version: 2.1.0
+  Version: 2.1.1
   Author: Allan Collins
   Author URI: http://www.allancollins.net/
  */

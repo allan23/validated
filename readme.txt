@@ -3,8 +3,8 @@ Contributors: collinsinternet
 Donate link: http://www.allancollins.net
 Tags: W3C, Validation, html, xhtml, code
 Requires at least: 3.7
-Tested up to: 4.3.1
-Stable tag: 2.2.0
+Tested up to: 4.4
+Stable tag: 2.2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -37,6 +37,9 @@ No. If your page or post is invalid, a link is provided to show you what needs t
 
 == Changelog ==
 
+= 2.1.1 =
+* Fixes bug reported by martinburchell when report data is empty.
+
 = 2.1.0 =
 * Utilizes the W3C API instead of attempting to use the web-based validator.
 * Displaying error results in a modal instead of a new window.
@@ -48,7 +51,7 @@ No. If your page or post is invalid, a link is provided to show you what needs t
 
 
 == Upgrade Notice == 
-Versions prior to 2.0.0 are insecure and should not be running in production.  Upgrade now!
+Versions prior to 2.1.0 will not work correctly. Any version below 2.0.0 is a security risk. Upgrade now!
 
 == Screenshots ==
 
