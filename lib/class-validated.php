@@ -24,14 +24,19 @@ class Validated {
 	public static function get_instance() {
 		if ( !self::$instance ) {
 			self::$instance = new self();
+			self::$instance->setup();
 		}
 		return self::$instance;
+	}
+
+	function __construct() {
+		
 	}
 
 	/**
 	 * Actions and Filters
 	 */
-	function __construct() {
+	function setup() {
 		add_filter( 'manage_posts_columns', array( $this, 'post_columns' ) );
 		add_filter( 'manage_pages_columns', array( $this, 'post_columns' ) );
 		add_action( 'manage_posts_custom_column', array( $this, 'display_columns' ), 10, 2 );
@@ -82,6 +87,9 @@ class Validated {
 		switch ( $column ) {
 			case 'validated_is_valid':
 				$results = get_post_meta( $post_id, '__validated', true );
+				if (!isset($results['results']) || empty($results['results'])){
+					$results=false;
+				}
 				echo '<div id="validated_' . esc_attr( $post_id ) . '">';
 				$this->show_results( $results, $post_id );
 				echo '</div>';
@@ -120,6 +128,9 @@ class Validated {
 		check_ajax_referer( 'validated_security', 'security' );
 		$post_id = $this->get_post_id();
 		$results = get_post_meta( $post_id, '__validated', true );
+		if (empty($results) || false === $results || (!isset($results['results']))){
+			return wp_send_json_error();
+		}
 		ob_start();
 		include VA_PATH . 'views/report.php';
 		$report	 = ob_get_clean();

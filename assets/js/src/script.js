@@ -32,9 +32,13 @@ jQuery( document ).ready( function ( $ ) {
             'post_id': post_id
         };
         jQuery.post( ajax_object.ajax_url, data, function ( validated_html ) {
-
+            var validated_modal = $( '#TB_ajaxContent' );
+            if ( false === validated_html.success ) {
+                 validated_modal.html( '<h2>Oops!</h2><p>The data for this report is missing. Please try validating again.</p>' );
+                 return;
+            }
             if ( false !== validated_html.data.report ) {
-                var validated_modal = $( '#TB_ajaxContent' );
+
                 if ( typeof validated_html.data.report === undefined ) {
                     validated_modal.html( '<p>There was an issue between your server and W3C. Please try again.</p>' );
                 } else {
@@ -42,6 +46,7 @@ jQuery( document ).ready( function ( $ ) {
                 }
 
             }
+
         } );
     } );
 } );

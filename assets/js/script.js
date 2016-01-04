@@ -1,6 +1,6 @@
 /*! Validated - v2.1.0
  * http://www.allancollins.net
- * Copyright (c) 2015; * Licensed GPLv2+ */
+ * Copyright (c) 2016; * Licensed GPLv2+ */
 /*global ajax_object:false, jQuery */
 jQuery( document ).ready( function ( $ ) {
     $( document.body ).on( 'click', '.a_validated_check', function ( event ) {
@@ -34,9 +34,13 @@ jQuery( document ).ready( function ( $ ) {
             'post_id': post_id
         };
         jQuery.post( ajax_object.ajax_url, data, function ( validated_html ) {
-
+            var validated_modal = $( '#TB_ajaxContent' );
+            if ( false === validated_html.success ) {
+                 validated_modal.html( '<h2>Oops!</h2><p>The data for this report is missing. Please try validating again.</p>' );
+                 return;
+            }
             if ( false !== validated_html.data.report ) {
-                var validated_modal = $( '#TB_ajaxContent' );
+
                 if ( typeof validated_html.data.report === undefined ) {
                     validated_modal.html( '<p>There was an issue between your server and W3C. Please try again.</p>' );
                 } else {
@@ -44,6 +48,7 @@ jQuery( document ).ready( function ( $ ) {
                 }
 
             }
+
         } );
     } );
 } );
