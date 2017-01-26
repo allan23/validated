@@ -11,11 +11,7 @@
 			<directory prefix="test-" suffix=".php">./tests/</directory>
 		</testsuite>
 		<filter>
-			<whitelist>
-				<directory suffix=".php">./</directory>
-				<exclude>
-					<directory suffix=".php">./vendor</directory>
-				</exclude>
+			<whitelist processUncoveredFilesFromWhitelist="true">
 			</whitelist>
 		</filter>
 	</testsuites>
