@@ -6,16 +6,16 @@
 	convertNoticesToExceptions="true"
 	convertWarningsToExceptions="true"
 	>
+	<filter>
+		<whitelist
+				addUncoveredFilesFromWhitelist="true"
+				processUncoveredFilesFromWhitelist="true">
+			<directory suffix=".php">./</directory>
+		</whitelist>
+	</filter>
 	<testsuites>
 		<testsuite>
 			<directory prefix="test-" suffix=".php">./tests/</directory>
 		</testsuite>
-		<filter>
-			<whitelist
-					addUncoveredFilesFromWhitelist="true"
-					processUncoveredFilesFromWhitelist="true">
-				<directory suffix=".php">./</directory>
-			</whitelist>
-		</filter>
 	</testsuites>
 </phpunit>
