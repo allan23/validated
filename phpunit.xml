@@ -17,9 +17,5 @@
 				<directory suffix=".php">./</directory>
 			</whitelist>
 		</filter>
-		<logging>
-			<log type="coverage-html" target="./results"/>
-			<log type="coverage-clover" target="./results/coverage.xml"/>
-		</logging>
 	</testsuites>
 </phpunit>
