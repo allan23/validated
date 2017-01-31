@@ -15,16 +15,16 @@ class ValidatedAjaxTests extends WP_Ajax_UnitTestCase {
 
 		// Become an administrator
 		$this->_setRole( 'administrator' );
-		$post_id			 = wp_insert_post( array( 'post_title' => 'test', 'post_type' => 'post', 'post_status' => 'publish' ) );
-		$errors				 = Validated::get_instance()->check_errors( json_decode( $this->mock_invalid ) );
-		$results			 = array(
-			'errors'	 => $errors,
-			'results'	 => json_decode( $this->mock_invalid )
+		$post_id = wp_insert_post( array( 'post_title' => 'test', 'post_type' => 'post', 'post_status' => 'publish' ) );
+		$errors  = Validated::get_instance()->check_errors( json_decode( $this->mock_invalid ) );
+		$results = array(
+			'errors'  => $errors,
+			'results' => json_decode( $this->mock_invalid )
 		);
 		update_post_meta( (int) $post_id, '__validated', $results );
-		$_POST[ '_wpnonce' ] = wp_create_nonce( 'validated_security' );
-		$_POST[ 'post_id' ]	 = $post_id;
-		$_POST[ 'action' ]	 = 'validated_results';
+		$_POST['_wpnonce'] = wp_create_nonce( 'validated_security' );
+		$_POST['post_id']  = $post_id;
+		$_POST['action']   = 'validated_results';
 		try {
 			$this->_handleAjax( 'validated_results' );
 		} catch ( WPAjaxDieContinueException $e ) {
@@ -44,16 +44,16 @@ class ValidatedAjaxTests extends WP_Ajax_UnitTestCase {
 
 		// Become an administrator
 		$this->_setRole( 'administrator' );
-		$post_id			 = wp_insert_post( array( 'post_title' => 'test', 'post_type' => 'post', 'post_status' => 'publish' ) );
-		$errors				 = Validated::get_instance()->check_errors( json_decode( $this->mock_invalid ) );
-		$results			 = array(
-			'errors'	 => $errors,
-			'results'	 => json_decode( array() )
+		$post_id = wp_insert_post( array( 'post_title' => 'test', 'post_type' => 'post', 'post_status' => 'publish' ) );
+		$errors  = Validated::get_instance()->check_errors( json_decode( $this->mock_invalid ) );
+		$results = array(
+			'errors'  => $errors,
+			'results' => json_decode( array() )
 		);
 		update_post_meta( (int) $post_id, '__validated', $results );
-		$_POST[ '_wpnonce' ] = wp_create_nonce( 'validated_security' );
-		$_POST[ 'post_id' ]	 = $post_id;
-		$_POST[ 'action' ]	 = 'validated_results';
+		$_POST['_wpnonce'] = wp_create_nonce( 'validated_security' );
+		$_POST['post_id']  = $post_id;
+		$_POST['action']   = 'validated_results';
 		try {
 			$this->_handleAjax( 'validated_results' );
 		} catch ( WPAjaxDieContinueException $e ) {
