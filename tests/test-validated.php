@@ -58,5 +58,6 @@ class ValidatedTests extends WP_UnitTestCase {
 	function test_true(){
 		$this->assertTrue(true);
 		// Test.
+		// Third time is a charm!
 	}
 }
