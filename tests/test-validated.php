@@ -55,4 +55,7 @@ class ValidatedTests extends WP_UnitTestCase {
 		$this->assertEquals( 0, $errors );
 	}
 
+	function test_true(){
+		$this->assertTrue(true);
+	}
 }
