@@ -3,8 +3,8 @@ Contributors: collinsinternet
 Donate link: http://www.allancollins.net
 Tags: W3C, Validation, html, xhtml, code
 Requires at least: 3.7
-Tested up to: 4.4
-Stable tag: 2.2.1
+Tested up to: 4.9
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -36,6 +36,9 @@ No. If your page or post is invalid, a link is provided to show you what needs t
 
 
 == Changelog ==
+
+= 2.1.2 =
+* Code styling issues resolved.
 
 = 2.1.1 =
 * Fixes bug reported by martinburchell when report data is empty.
