@@ -1,12 +1,24 @@
 a.validated_check span {
-    vertical-align:middle;
+    vertical-align: middle;
 }
+
 .validated_is_valid {
-    color:green;
+    color: green;
 }
-.validated_not_valid{
-    color:#ff0000;
+
+.validated_not_valid {
+    color: #ff0000;
 }
+
 .validated_loading {
-    display:none;
+    display: none;
+}
+
+.column-validated_check a {
+    font-weight: bold;
+}
+
+.column-validated_check a span.dashicons {
+    vertical-align: bottom;
+    font-size: 16px;
 }

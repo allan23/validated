@@ -1,6 +1,6 @@
-/*! Validated - v2.1.0
+/*! Validated - v2.1.2
  * http://www.allancollins.net
- * Copyright (c) 2016; * Licensed GPLv2+ */
+ * Copyright (c) 2017; * Licensed GPLv2+ */
 /*global ajax_object:false, jQuery */
 jQuery( document ).ready( function ( $ ) {
     $( document.body ).on( 'click', '.a_validated_check', function ( event ) {

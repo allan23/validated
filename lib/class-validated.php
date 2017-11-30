@@ -296,14 +296,11 @@ class Validated {
 			return $request;
 		}
 		$response = json_decode( wp_remote_retrieve_body( $request ) );
-		if ( ! is_object( $response ) ) {
+		if ( ! is_object( $response ) || false === $this->check_bad_response( $response ) ) {
 			return $this->call_api( $post_id, 2 );
 		}
-		ob_start();
-		print_r( $response );
-		error_log( ob_get_clean() );
 
-		return $this->check_bad_response( $response );
+		return $response;
 	}
 
 	/**
@@ -311,11 +308,11 @@ class Validated {
 	 *
 	 * @param stdClass $response The JSON decoded response from the W3C API.
 	 *
-	 * @return stdClass|WP_Error
+	 * @return stdClass|bool
 	 */
 	protected function check_bad_response( $response ) {
 		if ( isset( $response->messages, $response->messages[0] ) && 'non-document-error' === $response->messages[0]->type ) {
-			return new WP_Error( 'non-document-error', esc_html( $response->messages[0]->message ) );
+			return false;
 		}
 
 		return $response;
