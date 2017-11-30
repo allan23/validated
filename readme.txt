@@ -39,6 +39,7 @@ No. If your page or post is invalid, a link is provided to show you what needs t
 
 = 2.1.2 =
 * Code styling issues resolved.
+* Resolves issue with false valid results.
 
 = 2.1.1 =
 * Fixes bug reported by martinburchell when report data is empty.
